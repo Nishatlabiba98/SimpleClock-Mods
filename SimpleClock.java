@@ -1,9 +1,9 @@
 //package SimpleClock;
 
-import javax.swing.*;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import javax.swing.*;
 
 
 public class SimpleClock extends JFrame {
@@ -19,6 +19,8 @@ public class SimpleClock extends JFrame {
         String time;
         String day;
         String date;
+
+        Thread clockThread;
 
         SimpleClock() {
             this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -41,7 +43,6 @@ public class SimpleClock extends JFrame {
             dateLabel=new JLabel();
             dateLabel.setFont(new Font("Ink Free",Font.BOLD,30));
     
-    
             this.add(timeLabel);
             this.add(dayLabel);
             this.add(dateLabel);
@@ -51,24 +52,31 @@ public class SimpleClock extends JFrame {
         }
     
         public void setTimer() {
-            while (true) {
-                time = timeFormat.format(Calendar.getInstance().getTime());
-                timeLabel.setText(time);
-    
-                day = dayFormat.format(Calendar.getInstance().getTime());
-                dayLabel.setText(day);
-    
-                date = dateFormat.format(Calendar.getInstance().getTime());
-                dateLabel.setText(date);
-    
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception e) {
-                    e.getStackTrace();
+            clockThread = new Thread(() -> {
+                while (!Thread.currentThread().isInterrupted()) {
+                    time = timeFormat.format(Calendar.getInstance().getTime());
+                    day = dayFormat.format(Calendar.getInstance().getTime());
+                    date = dateFormat.format(Calendar.getInstance().getTime());
+
+                    SwingUtilities.invokeLater(() -> {
+                        timeLabel.setText(time);
+                        dayLabel.setText(day);
+                        dateLabel.setText(date);
+                    });
+
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
-            }
+            });
+
+            clockThread.setDaemon(true);
+            clockThread.start();
         }
+
         public static void main(String[] args) {
-            new SimpleClock();
+            SwingUtilities.invokeLater(SimpleClock::new);
         }
     }
